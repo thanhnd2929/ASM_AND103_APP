@@ -1,5 +1,6 @@
 package fpoly.ph45160.ph45160_and103_assignment.Home.Fragment;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fpoly.ph45160.ph45160_and103_assignment.APIService;
+import fpoly.ph45160.ph45160_and103_assignment.AccountActivity.ActivityAccount;
 import fpoly.ph45160.ph45160_and103_assignment.Home.Adapter.ProductAdapter;
 import fpoly.ph45160.ph45160_and103_assignment.Home.Model.ProductModel;
 import fpoly.ph45160.ph45160_and103_assignment.R;
@@ -49,6 +51,11 @@ public class FragmentProduct extends Fragment {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 2);
         binding.rcProduct.setLayoutManager(gridLayoutManager);
         binding.rcProduct.setAdapter(productAdapter);
+
+        binding.icPerson.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), ActivityAccount.class);
+            startActivity(intent);
+        });
 
         APIService apiService = RetrofitClient.getInstance().create(APIService.class);
         apiService.getProduct().enqueue(new Callback<List<ProductModel>>() {

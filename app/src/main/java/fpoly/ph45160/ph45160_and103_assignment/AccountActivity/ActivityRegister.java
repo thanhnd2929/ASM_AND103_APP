@@ -12,6 +12,10 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import fpoly.ph45160.ph45160_and103_assignment.R;
 import fpoly.ph45160.ph45160_and103_assignment.databinding.ActivityRegisterBinding;
@@ -20,6 +24,7 @@ public class ActivityRegister extends AppCompatActivity {
 
     ActivityRegisterBinding binding;
     FirebaseAuth mAuth;
+    FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +33,7 @@ public class ActivityRegister extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         binding.tvSignIn.setOnClickListener(v -> {
             Intent intent = new Intent(ActivityRegister.this, ActivitySignIn.class);
@@ -78,13 +84,30 @@ public class ActivityRegister extends AppCompatActivity {
                                     // Registration successful, get the current user
                                     FirebaseUser user = mAuth.getCurrentUser();
 
-                                    // Optionally, you can update user profile or handle other logic here
+                                    // Lưu thông tin người dùng vào Firestore
+                                    Map<String, Object> userData = new HashMap<>();
+                                    userData.put("userName", userName);
+                                    userData.put("email", email);
 
-                                    // Show a success message and redirect to Sign In
-                                    Toast.makeText(ActivityRegister.this, "Đăng kí tài khoản thành công.", Toast.LENGTH_SHORT).show();
-                                    Intent intent = new Intent(ActivityRegister.this, ActivitySignIn.class);
-                                    startActivity(intent);
-                                    finish();  // Close the current activity
+                                    db.collection("users").document(user.getUid())
+                                            .set(userData)
+                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<Void> task) {
+                                                    if (task.isSuccessful()) {
+                                                        // Show a success message and redirect to Sign In
+                                                        Toast.makeText(ActivityRegister.this, "Đăng kí tài khoản thành công.", Toast.LENGTH_SHORT).show();
+                                                        Intent intent = new Intent(ActivityRegister.this, ActivitySignIn.class);
+                                                        startActivity(intent);
+                                                        finish();  // Close the current activity
+                                                    } else {
+                                                        // Nếu lưu vào Firestore thất bại
+                                                        Toast.makeText(ActivityRegister.this, "Lưu thông tin người dùng thất bại: " + task.getException().getMessage(),
+                                                                Toast.LENGTH_LONG).show();
+                                                    }
+                                                }
+                                            });
+
                                 } else {
                                     // If registration fails, display a message to the user.
                                     Toast.makeText(ActivityRegister.this, "Đăng kí tài khoản thất bại: " + task.getException().getMessage(),
