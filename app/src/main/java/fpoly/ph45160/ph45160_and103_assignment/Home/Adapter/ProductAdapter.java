@@ -1,5 +1,6 @@
 package fpoly.ph45160.ph45160_and103_assignment.Home.Adapter;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import com.bumptech.glide.Glide;
 
 import java.util.List;
 
+import fpoly.ph45160.ph45160_and103_assignment.Home.Activity.ActivityProductDetails;
 import fpoly.ph45160.ph45160_and103_assignment.Home.Model.ProductModel;
 import fpoly.ph45160.ph45160_and103_assignment.R;
 
@@ -38,6 +40,18 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         Glide.with(holder.itemView.getContext())
                 .load(productModel.getImage())
                 .into(holder.imgProduct);
+
+        holder.imgProduct.setOnClickListener(v -> {
+            Intent intent = new Intent(holder.itemView.getContext(), ActivityProductDetails.class);
+            // Truyền dữ liệu sản phẩm qua Intent
+            intent.putExtra("productName", productModel.getName());
+            intent.putExtra("productPrice", productModel.getPrice());
+            intent.putExtra("productImage", productModel.getImage());
+            intent.putExtra("productCate", productModel.getCate());
+            intent.putExtra("productDes", productModel.getDes());
+            intent.putExtra("productWeight", productModel.getWeight());
+            holder.itemView.getContext().startActivity(intent);
+        });
     }
 
     @Override
