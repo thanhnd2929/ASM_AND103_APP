@@ -1,9 +1,13 @@
 package fpoly.ph45160.ph45160_and103_assignment.Cart;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,6 +20,7 @@ import java.util.List;
 import fpoly.ph45160.ph45160_and103_assignment.APIService;
 import fpoly.ph45160.ph45160_and103_assignment.Cart.Adapter.BillAdapter;
 import fpoly.ph45160.ph45160_and103_assignment.Cart.Model.BillModel;
+import fpoly.ph45160.ph45160_and103_assignment.Notification.HistoryModel;
 import fpoly.ph45160.ph45160_and103_assignment.R;
 import fpoly.ph45160.ph45160_and103_assignment.RetrofitClient;
 import retrofit2.Call;
@@ -27,6 +32,12 @@ public class FragmentCart extends Fragment {
     private RecyclerView recyclerView;
     private BillAdapter billAdapter;
     private List<BillModel> billList;
+    private TextView txtTotalPrice;
+    APIService apiService;
+    Button btnPay;
+     private double totalPrice;
+
+
 
     @Nullable
     @Override
@@ -35,10 +46,94 @@ public class FragmentCart extends Fragment {
         recyclerView = view.findViewById(R.id.rcBill);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        txtTotalPrice = view.findViewById(R.id.txt_total);
+
+         apiService = RetrofitClient.getInstance().create(APIService.class);
+
+
+
+        fetchTotalPrice();
         loadBills();
+
+        btnPay = view.findViewById(R.id.btnPay);
+        btnPay.setOnClickListener(v -> {
+            // Thêm hóa đơn vào lịch sử
+            Call<Void> addToHistoryCall = apiService.addBillsToHistory();
+            addToHistoryCall.enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    if (response.isSuccessful()) {
+                        // Xóa tất cả hóa đơn sau khi thêm vào lịch sử thành công
+                        Call<Void> deleteAllBillsCall = apiService.deleteAllBills();
+                        deleteAllBillsCall.enqueue(new Callback<Void>() {
+                            @Override
+                            public void onResponse(Call<Void> call, Response<Void> response) {
+                                if (response.isSuccessful()) {
+                                    Toast.makeText(getContext(), "Bills added to history and deleted successfully", Toast.LENGTH_SHORT).show();
+                                    // Cập nhật danh sách hóa đơn và tổng tiền
+                                    updateBill();
+                                } else {
+                                    Toast.makeText(getContext(), "Failed to delete bills: " + response.message(), Toast.LENGTH_SHORT).show();
+                                    Log.e("API_ERROR", "Response code: " + response.code());
+                                    Log.e("API_ERROR", "Response message: " + response.message());
+                                    Log.e("API_ERROR", "Response error body: " + response.errorBody());
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Call<Void> call, Throwable t) {
+                                Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                                Log.e("API_ERROR", "Request failed", t);
+                            }
+                        });
+                    } else {
+                        Toast.makeText(getContext(), "Failed to add bills to history: " + response.message(), Toast.LENGTH_SHORT).show();
+                        Log.e("API_ERROR", "Response code: " + response.code());
+                        Log.e("API_ERROR", "Response message: " + response.message());
+                        Log.e("API_ERROR", "Response error body: " + response.errorBody());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    Toast.makeText(getContext(), "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.e("API_ERROR", "Request failed", t);
+                }
+            });
+        });
+
+
 
         return view;
     }
+
+
+
+    // Trong FragmentCart hoặc Activity tương ứng
+
+
+
+    private void fetchTotalPrice() {
+        Call<TotaPriceResponse> call = apiService.getTotalPrice();
+        call.enqueue(new Callback<TotaPriceResponse>() {
+            @Override
+            public void onResponse(Call<TotaPriceResponse> call, Response<TotaPriceResponse> response) {
+                if (response.isSuccessful()) {
+                    totalPrice = response.body().getTotalPrice();
+                    txtTotalPrice.setText("Total Price" + "\n" + totalPrice + " VND");
+                }else {
+                    Toast.makeText(getContext(), "Failed to fetch total price", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TotaPriceResponse> call, Throwable t) {
+
+            }
+        });
+    }
+
+
 
     private void loadBills() {
         APIService apiService = RetrofitClient.getInstance().create(APIService.class);
@@ -48,8 +143,10 @@ public class FragmentCart extends Fragment {
             public void onResponse(Call<List<BillModel>> call, Response<List<BillModel>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     billList = response.body();
-                    billAdapter = new BillAdapter(billList, getContext());
+                    billAdapter = new BillAdapter(billList, getContext(), FragmentCart.this);
                     recyclerView.setAdapter(billAdapter);
+
+                    fetchTotalPrice();
                 }
             }
 
@@ -58,5 +155,12 @@ public class FragmentCart extends Fragment {
                 // Handle failure
             }
         });
+    }
+
+
+
+    public void updateBill() {
+        // Re-fetch the bills and total price after an update (addition or deletion)
+        loadBills();
     }
 }

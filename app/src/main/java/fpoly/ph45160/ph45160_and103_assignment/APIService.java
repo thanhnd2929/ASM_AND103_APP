@@ -3,7 +3,9 @@ package fpoly.ph45160.ph45160_and103_assignment;
 import java.util.List;
 
 import fpoly.ph45160.ph45160_and103_assignment.Cart.Model.BillModel;
+import fpoly.ph45160.ph45160_and103_assignment.Cart.TotaPriceResponse;
 import fpoly.ph45160.ph45160_and103_assignment.Home.Model.ProductModel;
+import fpoly.ph45160.ph45160_and103_assignment.Notification.HistoryModel;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -26,7 +28,7 @@ public interface APIService {
     @PUT("products/{id}")
     Call<ProductModel> updateProduct(@Path("id") String id, @Body ProductModel productModel);
 
-//
+    //  bill
     @GET("bills")
     Call<List<BillModel>> getBill();
 
@@ -35,6 +37,22 @@ public interface APIService {
 
     @POST("bills")
     Call<BillModel> createBill(@Body BillModel billModel);
+
+    // Thêm phương thức mới để lấy tổng tiền
+    @GET("bills/total")
+    Call<TotaPriceResponse> getTotalPrice();
+
+    //    history
+    @POST("historys")
+    Call<Void> addBillsToHistory();
+
+    // Phương thức để lấy tất cả dữ liệu từ historys
+    @GET("historys")
+    Call<List<HistoryModel>> getAllHistories();
+
+    // Thêm phương thức để xóa tất cả hóa đơn
+    @DELETE("bills")
+    Call<Void> deleteAllBills();
 
 
 }

@@ -18,6 +18,7 @@ import com.bumptech.glide.Glide;
 import java.util.List;
 
 import fpoly.ph45160.ph45160_and103_assignment.APIService;
+import fpoly.ph45160.ph45160_and103_assignment.Cart.FragmentCart;
 import fpoly.ph45160.ph45160_and103_assignment.Cart.Model.BillModel;
 import fpoly.ph45160.ph45160_and103_assignment.R;
 import fpoly.ph45160.ph45160_and103_assignment.RetrofitClient;
@@ -29,12 +30,14 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
 
     private List<BillModel> billList;
     private Context context;
+    private FragmentCart fragmentCart;
 
-    public BillAdapter(List<BillModel> billList, Context context) {
+
+    public BillAdapter(List<BillModel> billList, Context context, FragmentCart fragmentCart) {
         this.billList = billList;
         this.context = context;
+        this.fragmentCart = fragmentCart;
     }
-
     @NonNull
     @Override
     public BillViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -65,6 +68,11 @@ public class BillAdapter extends RecyclerView.Adapter<BillAdapter.BillViewHolder
                         billList.remove(position);
                         notifyItemRemoved(position);
                         notifyItemRangeChanged(position, billList.size());
+
+                        // Notify FragmentCart to update total price
+                        if (fragmentCart != null) {
+                            fragmentCart.updateBill();
+                        }
                     } else {
                         Toast.makeText(v.getContext(), "Xoá không thành công.", Toast.LENGTH_SHORT).show();
                     }
